@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../App';
-import { apiService } from '../services/apiService';
-import { WorkLog, WorkStatus } from '../types';
+import { useAuth } from '../App.tsx';
+import { apiService } from '../services/apiService.ts';
+import { WorkLog, WorkStatus } from '../types.ts';
 
 const ReportsPage: React.FC = () => {
   const { auth } = useAuth();

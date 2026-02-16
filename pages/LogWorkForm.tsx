@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../App';
-import { apiService } from '../services/apiService';
-import { WorkStatus, WorkLog } from '../types';
+import { useAuth } from '../App.tsx';
+import { apiService } from '../services/apiService.ts';
+import { WorkStatus, WorkLog } from '../types.ts';
 
 const LogWorkForm: React.FC = () => {
   const { auth } = useAuth();
