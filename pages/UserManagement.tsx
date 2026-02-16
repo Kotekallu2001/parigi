@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
-import { apiService } from '../services/apiService.ts';
-import { User, Role } from '../types.ts';
+import { apiService } from '../services/apiService';
+import { User, Role } from '../types';
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
