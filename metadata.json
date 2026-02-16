@@ -1,0 +1,8 @@
+{
+  "name": "wassan-vikarabad",
+  "description": "A field staff work logging and attendance tracking system with Google Sheets backend and AI-powered insights.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
