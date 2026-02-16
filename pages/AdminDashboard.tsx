@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiService } from '../services/apiService.ts';
-import { WorkLog, User, WorkStatus } from '../types.ts';
-import Calendar from '../components/Calendar.tsx';
+import { apiService } from '../services/apiService';
+import { WorkLog, User, WorkStatus } from '../types';
+import Calendar from '../components/Calendar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const AdminDashboard: React.FC = () => {

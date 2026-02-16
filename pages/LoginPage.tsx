@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../App.tsx';
-import { apiService } from '../services/apiService.ts';
+import { useAuth } from '../App';
+import { apiService } from '../services/apiService';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');

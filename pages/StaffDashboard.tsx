@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../App.tsx';
-import { apiService } from '../services/apiService.ts';
-import { geminiService } from '../services/geminiService.ts';
-import { WorkLog, WorkStatus } from '../types.ts';
-import Calendar from '../components/Calendar.tsx';
+import { useAuth } from '../App';
+import { apiService } from '../services/apiService';
+import { geminiService } from '../services/geminiService';
+import { WorkLog, WorkStatus } from '../types';
+import Calendar from '../components/Calendar';
 
 const StaffDashboard: React.FC = () => {
   const { auth } = useAuth();

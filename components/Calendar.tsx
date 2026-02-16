@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { WorkLog, WorkStatus } from '../types.ts';
+import { WorkLog, WorkStatus } from '../types';
 
 interface CalendarProps {
   logs: WorkLog[];
