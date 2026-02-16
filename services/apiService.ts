@@ -1,9 +1,6 @@
 
-import { User, WorkLog, Role, WorkStatus } from '../types.ts';
+import { User, WorkLog, Role, WorkStatus } from '../types';
 
-/**
- * GOOGLE APPS SCRIPT BACKEND
- */
 const GAS_WEBAPP_URL: string = "https://script.google.com/macros/s/AKfycbxIvWtP7mohEMsKpqlyN4xnsu_9m6BOj2TblT63ldMftgCVxbrRQs9ee0jmuxdbcu3wmg/exec"; 
 
 const isMockMode = !GAS_WEBAPP_URL || GAS_WEBAPP_URL.trim() === "" || GAS_WEBAPP_URL.includes("REPLACE_WITH_ID");

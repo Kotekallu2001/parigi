@@ -1,15 +1,15 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthState, User, Role } from './types.ts';
-import Navbar from './components/Navbar.tsx';
-import HomePage from './pages/HomePage.tsx';
-import LoginPage from './pages/LoginPage.tsx';
-import StaffDashboard from './pages/StaffDashboard.tsx';
-import AdminDashboard from './pages/AdminDashboard.tsx';
-import LogWorkForm from './pages/LogWorkForm.tsx';
-import ReportsPage from './pages/ReportsPage.tsx';
-import UserManagement from './pages/UserManagement.tsx';
+import { AuthState, User, Role } from './types';
+import Navbar from './components/Navbar';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import StaffDashboard from './pages/StaffDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import LogWorkForm from './pages/LogWorkForm';
+import ReportsPage from './pages/ReportsPage';
+import UserManagement from './pages/UserManagement';
 
 interface AuthContextType {
   auth: AuthState;
@@ -33,12 +33,10 @@ const ProtectedRoute = ({ children, allowedRoles }: React.PropsWithChildren<{ al
   }
 
   if (allowedRoles) {
-    // Perform case-insensitive role check to handle different spreadsheet data formats
     const userRoleLower = auth.user.role.toLowerCase();
     const isAllowed = allowedRoles.some(role => role.toLowerCase() === userRoleLower);
     
     if (!isAllowed) {
-      console.warn(`Access Denied: User role "${auth.user.role}" not in allowed list [${allowedRoles.join(', ')}]`);
       return <Navigate to="/dashboard" />;
     }
   }

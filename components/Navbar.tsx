@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../App.tsx';
-import { Role } from '../types.ts';
+import { useAuth } from '../App';
+import { Role } from '../types';
 
 const Navbar: React.FC = () => {
   const { auth, logout } = useAuth();
@@ -28,7 +28,6 @@ const Navbar: React.FC = () => {
     if (!link.private) return true;
     if (link.private && !auth.isAuthenticated) return false;
     
-    // Perform case-insensitive role check
     if (link.role && auth.user?.role) {
       const userRoleLower = auth.user.role.toLowerCase();
       const linkRoleLower = link.role.toLowerCase();
