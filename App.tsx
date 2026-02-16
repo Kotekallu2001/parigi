@@ -1,15 +1,15 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthState, User, Role } from './types';
-import Navbar from './components/Navbar';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import StaffDashboard from './pages/StaffDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import LogWorkForm from './pages/LogWorkForm';
-import ReportsPage from './pages/ReportsPage';
-import UserManagement from './pages/UserManagement';
+import { AuthState, User, Role } from './types.ts';
+import Navbar from './components/Navbar.tsx';
+import HomePage from './pages/HomePage.tsx';
+import LoginPage from './pages/LoginPage.tsx';
+import StaffDashboard from './pages/StaffDashboard.tsx';
+import AdminDashboard from './pages/AdminDashboard.tsx';
+import LogWorkForm from './pages/LogWorkForm.tsx';
+import ReportsPage from './pages/ReportsPage.tsx';
+import UserManagement from './pages/UserManagement.tsx';
 
 interface AuthContextType {
   auth: AuthState;

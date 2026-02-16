@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { WorkLog, WorkStatus } from '../types';
+import { WorkLog, WorkStatus } from '../types.ts';
 
 interface CalendarProps {
   logs: WorkLog[];
@@ -17,9 +17,7 @@ const Calendar: React.FC<CalendarProps> = ({ logs, year, month, onDateClick }) =
   const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => i);
 
   const getLogForDay = (day: number) => {
-    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return logs.find(l => {
-      // Basic date string match
       const logDate = new Date(l.date);
       return logDate.getDate() === day && (logDate.getMonth() + 1) === month && logDate.getFullYear() === year;
     });

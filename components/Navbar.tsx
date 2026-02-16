@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../App';
-import { Role } from '../types';
+import { useAuth } from '../App.tsx';
+import { Role } from '../types.ts';
 
 const Navbar: React.FC = () => {
   const { auth, logout } = useAuth();
