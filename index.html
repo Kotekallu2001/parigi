@@ -7,9 +7,10 @@
     <title>Wassan Vikarabad - Field Operations</title>
     <meta name="theme-color" content="#4f46e5">
     
-    <!-- Robust Shim for process.env (Must be first) -->
+    <!-- Robust Global Shim for process.env (Required for Google GenAI SDK) -->
     <script>
-      window.process = window.process || { env: { API_KEY: "" } };
+      window.process = { env: { API_KEY: "" } };
+      window.global = window;
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,6 +28,18 @@
         .report-table { width: 100%; border-collapse: collapse; border: 2px solid black; }
         .report-table th, .report-table td { border: 1px solid black; padding: 10px 8px; text-align: left; font-size: 11px; }
         .report-table th { background-color: #f1f5f9; text-transform: uppercase; font-weight: 800; }
+        
+        /* Loading state fallback */
+        #root:empty::before {
+            content: 'Loading Wassan Vikarabad...';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: #4f46e5;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
     </style>
 <script type="importmap">
 {
