@@ -1,15 +1,24 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { WorkLog } from "../types";
 
-// In production, process.env.API_KEY is injected. 
-// We use a fallback to empty string to prevent initialization crash.
-const apiKey = process.env.API_KEY || "";
-const ai = new GoogleGenAI({ apiKey });
+// Safer access to process.env for various execution environments
+const getApiKey = (): string => {
+  try {
+    // Check global window shim first, then fallback to built-in process
+    return (window as any).process?.env?.API_KEY || (process as any)?.env?.API_KEY || "";
+  } catch {
+    return "";
+  }
+};
+
+const apiKey = getApiKey();
+
+// Initialize the AI client only if an API key is present
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const geminiService = {
   async analyzeWorkLogs(logs: WorkLog[], userName: string): Promise<string> {
-    if (!apiKey) return "AI Analysis is disabled (API Key not configured).";
+    if (!ai) return "AI Analysis is disabled (API Key not configured).";
     if (!logs.length) return "No data available for analysis.";
     
     const context = logs.map(l => 

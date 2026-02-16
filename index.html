@@ -8,7 +8,7 @@
     
     <!-- Robust Global Shim for process.env (Required for Google GenAI SDK) -->
     <script>
-      window.process = window.process || { env: { API_KEY: "" } };
+      window.process = { env: { API_KEY: "" } };
       window.global = window;
     </script>
 
