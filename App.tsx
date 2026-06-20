@@ -4,6 +4,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthState, User, Role } from './types';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
+import GalleryPage from './pages/GalleryPage';
 import LoginPage from './pages/LoginPage';
 import StaffDashboard from './pages/StaffDashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -71,6 +72,7 @@ const App: React.FC = () => {
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/gallery" element={<GalleryPage />} />
               <Route path="/login" element={auth.isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
               
               <Route path="/dashboard" element={

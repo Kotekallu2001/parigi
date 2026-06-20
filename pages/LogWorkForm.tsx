@@ -25,6 +25,42 @@ const LogWorkForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [existingLogs, setExistingLogs] = useState<WorkLog[]>([]);
+  const [fetchingLogs, setFetchingLogs] = useState(true);
+
+  useEffect(() => {
+    const loadLogs = async () => {
+      if (!auth.user) return;
+      try {
+        setFetchingLogs(true);
+        const data = await apiService.getAllLogs();
+        const userLogs = data.filter((l: WorkLog) => l.username.toLowerCase() === auth.user?.username.toLowerCase());
+        setExistingLogs(userLogs);
+      } catch (err) {
+        console.error("Error loading existing logs:", err);
+      } finally {
+        setFetchingLogs(false);
+      }
+    };
+    loadLogs();
+  }, [auth.user]);
+
+  const getFormattedDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toISOString().split('T')[0];
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const isDateBlocked = existingLogs.some(log => {
+    const formattedLogDate = getFormattedDate(log.date);
+    const formattedFormDate = getFormattedDate(formData.date);
+    return formattedLogDate === formattedFormDate && formattedLogDate !== '';
+  });
 
   useEffect(() => {
     // Capture GPS location on mount
@@ -46,6 +82,10 @@ const LogWorkForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isDateBlocked) {
+      alert("You have already logged work or attendance for this date. Single day logs cannot be submitted multiple times.");
+      return;
+    }
     if (formData.status !== WorkStatus.WORKING && !formData.reason) {
       alert("Please provide a reason for Leave/Holiday");
       return;
@@ -139,6 +179,18 @@ const LogWorkForm: React.FC = () => {
             </div>
           </div>
 
+          {isDateBlocked && (
+            <div className="p-4 bg-rose-50 border border-rose-250 rounded-2xl text-rose-700 text-sm flex items-start gap-3">
+              <i className="fas fa-exclamation-circle text-rose-500 mt-0.5 text-base animate-bounce"></i>
+              <div>
+                <p className="font-bold">Entry Blocked for Today</p>
+                <p className="text-xs text-rose-600 mt-1">
+                  You have already logged work or attendance for this date ({formData.date}). Multiple submissions for a single day are blocked.
+                </p>
+              </div>
+            </div>
+          )}
+
           {formData.status === WorkStatus.WORKING ? (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -151,6 +203,7 @@ const LogWorkForm: React.FC = () => {
                     placeholder="E.g. Tandur"
                     value={formData.village}
                     onChange={(e) => setFormData(f => ({ ...f, village: e.target.value }))}
+                    disabled={isDateBlocked}
                   />
                 </div>
                 <div>
@@ -162,6 +215,7 @@ const LogWorkForm: React.FC = () => {
                     placeholder="E.g. Soil Testing"
                     value={formData.activity}
                     onChange={(e) => setFormData(f => ({ ...f, activity: e.target.value }))}
+                    disabled={isDateBlocked}
                   />
                 </div>
               </div>
@@ -174,6 +228,7 @@ const LogWorkForm: React.FC = () => {
                   placeholder="Describe your work done today in detail..."
                   value={formData.workDetails}
                   onChange={(e) => setFormData(f => ({ ...f, workDetails: e.target.value }))}
+                  disabled={isDateBlocked}
                 ></textarea>
               </div>
             </div>
@@ -187,6 +242,7 @@ const LogWorkForm: React.FC = () => {
                 placeholder={`Please explain why you are taking a ${formData.status}...`}
                 value={formData.reason}
                 onChange={(e) => setFormData(f => ({ ...f, reason: e.target.value }))}
+                disabled={isDateBlocked}
               ></textarea>
             </div>
           )}
@@ -201,10 +257,18 @@ const LogWorkForm: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className={`flex-[2] py-3 px-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all ${loading ? 'opacity-70' : ''}`}
+              disabled={loading || isDateBlocked || fetchingLogs}
+              className={`flex-[2] py-3 px-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all ${
+                (loading || isDateBlocked || fetchingLogs) ? 'opacity-50 cursor-not-allowed bg-indigo-400 shadow-none' : ''
+              }`}
             >
-              {loading ? <><i className="fas fa-spinner fa-spin mr-2"></i> Submitting...</> : 'Submit Log'}
+              {fetchingLogs ? (
+                <><i className="fas fa-spinner fa-spin mr-2"></i> Checking logs...</>
+              ) : loading ? (
+                <><i className="fas fa-spinner fa-spin mr-2"></i> Submitting...</>
+              ) : (
+                'Submit Log'
+              )}
             </button>
           </div>
         </form>

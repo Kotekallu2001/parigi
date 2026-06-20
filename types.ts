@@ -38,6 +38,7 @@ export interface GalleryItem {
   activity: string;
   village: string;
   date: string;
+  description?: string;
 }
 
 export interface AuthState {

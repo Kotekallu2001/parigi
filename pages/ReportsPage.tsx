@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import { apiService } from '../services/apiService';
 import { WorkLog, WorkStatus } from '../types';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+};
 
 const ReportsPage: React.FC = () => {
   const { auth } = useAuth();
@@ -9,6 +19,7 @@ const ReportsPage: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [reportLogs, setReportLogs] = useState<WorkLog[]>([]);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -50,11 +61,48 @@ const ReportsPage: React.FC = () => {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const currentMonthName = months[selectedMonth - 1].toUpperCase();
+
+  const logChunks = reportLogs.length > 0 ? chunkArray(reportLogs, 10) : [[]];
+
+  const handleDownloadPDF = async () => {
+    try {
+      setDownloading(true);
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      for (let index = 0; index < logChunks.length; index++) {
+        const pageElement = document.getElementById(`report-document-page-${index}`);
+        if (!pageElement) continue;
+
+        const canvas = await html2canvas(pageElement, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        if (index > 0) {
+          pdf.addPage('a4', 'landscape');
+        }
+
+        pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+      }
+
+      pdf.save(`Wassan_Work_Report_${auth.user?.username || 'User'}_${currentMonthName}_${selectedYear}.pdf`);
+    } catch (err) {
+      console.error("Failed to generate PDF:", err);
+      alert("Error occurred while generating PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -66,10 +114,11 @@ const ReportsPage: React.FC = () => {
         </div>
         <div className="flex gap-4">
           <button
-            onClick={handlePrint}
-            className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg flex items-center"
+            onClick={handleDownloadPDF}
+            disabled={downloading}
+            className={`px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg flex items-center ${downloading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            <i className="fas fa-file-pdf mr-2 text-xl"></i> Download PDF / Print
+            <i className="fas fa-file-pdf mr-2 text-xl"></i> {downloading ? 'Generating PDF...' : 'Download Report PDF (Landscape)'}
           </button>
         </div>
       </div>
@@ -99,103 +148,138 @@ const ReportsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* DOCUMENT VIEW - Exact Replica of User Requirement */}
-      <div className="bg-white p-12 border shadow-2xl print:shadow-none print:border-none print-area mx-auto max-w-[210mm] min-h-[297mm] text-black">
-        {/* Logo and Main Header */}
-        <div className="relative mb-8 pt-4">
-          <div className="absolute left-0 top-0">
-             <img 
-              src="https://www.wassan.org/wp-content/uploads/2021/11/wassan-logo.png" 
-              alt="WASSAN" 
-              className="h-24 w-auto object-contain"
-             />
-          </div>
-          <div className="text-center pt-6 border-b-2 border-slate-800 pb-2 ml-24">
-             <h1 className="text-2xl font-black tracking-widest text-slate-900 uppercase">
-               MONTHLY WORK DONE REPORT - {currentMonthName} {selectedYear}
-             </h1>
-          </div>
-        </div>
+      {/* DOCUMENT VIEW - Exact Replica of User Requirement in Landscape */}
+      <div className="w-full overflow-x-auto py-4 flex flex-col items-center gap-8 bg-slate-100 p-6 rounded-3xl border border-slate-200">
+        {logChunks.map((chunk, index) => (
+          <div 
+            key={index}
+            id={`report-document-page-${index}`}
+            className="bg-white p-12 border shadow-2xl print:shadow-none print:border-none print-area mx-auto text-black relative font-sans"
+            style={{ 
+              width: '297mm', 
+              height: '210mm', 
+              minHeight: '210mm', 
+              maxHeight: '210mm', 
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between'
+            }}
+          >
+            {/* Top Container for Header, Info, Table */}
+            <div>
+              {/* Logo and Main Header */}
+              <div className="relative mb-6 pt-2 select-none flex items-center justify-center">
+                <div className="absolute left-0 top-0">
+                   <img 
+                    src="https://www.wassan.org/wp-content/uploads/2021/11/wassan-logo.png" 
+                    alt="WASSAN" 
+                    className="h-16 w-auto object-contain"
+                    referrerPolicy="no-referrer"
+                   />
+                </div>
+                <div className="text-center pt-2 border-b-2 border-slate-800 pb-2 w-full">
+                   <h1 className="text-2xl font-black tracking-widest text-slate-900 uppercase">
+                     MONTHLY WORK DONE REPORT
+                   </h1>
+                </div>
+              </div>
 
-        {/* Info Grid - Standard Office Layout */}
-        <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-8 text-[14px]">
-          <div className="flex items-center">
-            <span className="font-bold w-32 uppercase">NAME:</span>
-            <span className="border-b border-black flex-1 px-2 font-medium">{auth.user?.username || '-'}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-bold w-32 uppercase">Date:</span>
-            <span className="border-b border-black flex-1 px-2 font-medium">{new Date().toLocaleDateString('en-GB')}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-bold w-32 uppercase">Designation:</span>
-            <span className="border-b border-black flex-1 px-2 font-medium">{auth.user?.role || '-'}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-bold w-32 uppercase">LOCATION:</span>
-            <span className="border-b border-black flex-1 px-2 font-medium uppercase">VIKARABAD</span>
-          </div>
-        </div>
+              {/* Info Grid - Standard Office Layout with Perfect Bottom Align Underline */}
+              <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-6 text-[13px] select-none">
+                <div className="flex items-end min-h-[30px]">
+                  <span className="font-bold w-36 uppercase text-slate-700 pb-1">NAME:</span>
+                  <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 min-h-[24px]">
+                    {auth.user?.username || '-'}
+                  </span>
+                </div>
+                <div className="flex items-end min-h-[30px]">
+                  <span className="font-bold w-40 uppercase text-slate-700 pb-1">REPORTING MONTH:</span>
+                  <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 min-h-[24px]">
+                    {currentMonthName} {selectedYear}
+                  </span>
+                </div>
+                <div className="flex items-end min-h-[30px]">
+                  <span className="font-bold w-36 uppercase text-slate-700 pb-1">DESIGNATION:</span>
+                  <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 min-h-[24px]">
+                    {auth.user?.role || '-'}
+                  </span>
+                </div>
+                <div className="flex items-end min-h-[30px]">
+                  <span className="font-bold w-36 uppercase text-slate-700 pb-1">LOCATION:</span>
+                  <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 uppercase min-h-[24px]">
+                    VIKARABAD
+                  </span>
+                </div>
+              </div>
 
-        {/* Report Table */}
-        <div className="w-full">
-          <table className="report-table border-2 border-black">
-            <thead>
-              <tr className="bg-slate-50">
-                <th className="w-[60px] text-center border-2 border-black py-3 px-2 font-black text-xs">S.NO</th>
-                <th className="w-[120px] text-center border-2 border-black py-3 px-2 font-black text-xs">DATE</th>
-                <th className="w-[150px] border-2 border-black py-3 px-2 font-black text-xs">village</th>
-                <th className="w-[180px] border-2 border-black py-3 px-2 font-black text-xs">Activity</th>
-                <th className="border-2 border-black py-3 px-2 font-black text-xs">WORK DONE DETAILS</th>
-              </tr>
-            </thead>
-            <tbody className="telugu-font">
-              {reportLogs.length > 0 ? reportLogs.map((log, i) => (
-                <tr key={i} className="min-h-[40px]">
-                  <td className="text-center border border-black py-2 px-2 font-bold">{i + 1}</td>
-                  <td className="text-center border border-black py-2 px-2">
-                    {new Date(log.date).toLocaleDateString('en-GB')}
-                  </td>
-                  <td className="border border-black py-2 px-2 uppercase text-[11px]">{log.village || '-'}</td>
-                  <td className="border border-black py-2 px-2 text-[11px] font-semibold">{log.activity || '-'}</td>
-                  <td className="border border-black py-2 px-2 text-[11px] leading-relaxed">
-                    {log.status === WorkStatus.WORKING ? log.workDetails : `[${log.status.toUpperCase()}] ${log.reason}`}
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={5} className="py-20 text-center text-slate-400 italic border border-black">
-                    {loading ? 'Processing data...' : 'No entries found for this reporting period.'}
-                  </td>
-                </tr>
-              )}
-              {/* Fill remaining space to match the physical document look */}
-              {reportLogs.length < 15 && Array.from({ length: 15 - reportLogs.length }).map((_, i) => (
-                <tr key={`blank-${i}`} className="h-10">
-                  <td className="border border-black"></td>
-                  <td className="border border-black"></td>
-                  <td className="border border-black"></td>
-                  <td className="border border-black"></td>
-                  <td className="border border-black"></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              {/* Report Table */}
+              <div className="w-full">
+                <table className="report-table border-2 border-black text-slate-900">
+                  <thead>
+                    <tr className="bg-slate-100 select-none">
+                      <th className="w-[60px] text-center border-2 border-black py-2 px-2 font-black text-[11px]">S.NO</th>
+                      <th className="w-[120px] text-center border-2 border-black py-2 px-2 font-black text-[11px]">DATE</th>
+                      <th className="w-[150px] border-2 border-black py-2 px-2 font-black text-[11px]">VILLAGE</th>
+                      <th className="w-[180px] border-2 border-black py-2 px-2 font-black text-[11px]">ACTIVITY</th>
+                      <th className="border-2 border-black py-2 px-2 font-black text-[11px]">WORK DONE DETAILS</th>
+                    </tr>
+                  </thead>
+                  <tbody className="telugu-font text-[11px]">
+                    {chunk.length > 0 ? chunk.map((log, i) => (
+                      <tr key={i} className="h-9">
+                        <td className="text-center border border-black py-1 px-2 font-semibold select-none">
+                          {index * 10 + i + 1}
+                        </td>
+                        <td className="text-center border border-black py-1 px-2 select-none">
+                          {new Date(log.date).toLocaleDateString('en-GB')}
+                        </td>
+                        <td className="border border-black py-1 px-2 uppercase font-medium">{log.village || '-'}</td>
+                        <td className="border border-black py-1 px-2 font-semibold text-indigo-900">{log.activity || '-'}</td>
+                        <td className="border border-black py-1 px-2 leading-relaxed">
+                          {log.status === WorkStatus.WORKING ? log.workDetails : `[${log.status.toUpperCase()}] ${log.reason}`}
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={5} className="py-12 text-center text-slate-400 italic border border-black text-xs select-none">
+                          {loading ? 'Processing data...' : 'No entries found for this reporting period.'}
+                        </td>
+                      </tr>
+                    )}
+                    {/* Fill remaining space to match the physical document look perfectly (10 rows limit) */}
+                    {chunk.length < 10 && Array.from({ length: 10 - chunk.length }).map((_, i) => (
+                      <tr key={`blank-${i}`} className="h-9">
+                        <td className="border border-black select-none"></td>
+                        <td className="border border-black select-none"></td>
+                        <td className="border border-black select-none"></td>
+                        <td className="border border-black select-none"></td>
+                        <td className="border border-black select-none"></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-        {/* Footer Signature Section */}
-        <div className="mt-20 flex justify-between px-8">
-          <div className="w-64 text-center border-t border-black pt-2">
-            <span className="text-[10px] font-black uppercase tracking-widest">Employee Signature</span>
-          </div>
-          <div className="w-64 text-center border-t border-black pt-2">
-            <span className="text-[10px] font-black uppercase tracking-widest">Authorized Signatory</span>
-          </div>
-        </div>
+            {/* Bottom Container for Signatures / Footers */}
+            <div>
+              {/* Footer Signature Section */}
+              <div className="flex justify-between px-8 border-t border-slate-100 pt-4 select-none">
+                <div className="w-64 text-center border-t border-black pt-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">Employee Signature</span>
+                </div>
+                <div className="w-64 text-center border-t border-black pt-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">Authorized Signatory</span>
+                </div>
+              </div>
 
-        <div className="mt-16 text-[9px] text-center text-slate-500 uppercase tracking-widest print:block hidden">
-          This is a computer-generated report | Wassan Vikarabad Operations | {new Date().toLocaleString()}
-        </div>
+              <div className="mt-4 text-[9px] text-center text-slate-400 uppercase tracking-widest select-none">
+                This is a computer-generated report | Wassan Vikarabad Operations | {new Date().toLocaleString('en-GB')}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
