@@ -351,23 +351,23 @@ const HomePage: React.FC = () => {
         <div 
           id="villages-live-map-card"
           className={`bg-white border rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative ${
-            isFullScreen ? 'fixed inset-0 z-50 rounded-none border-none max-w-none m-0 h-full' : 'h-[620px] md:h-[650px]'
+            isFullScreen ? 'fixed inset-0 z-50 rounded-none border-none max-w-none m-0 h-full' : 'h-[580px] md:h-[620px]'
           }`}
         >
-          {/* Controls Bar */}
-          <div className="bg-slate-900 p-4 border-b border-slate-800 flex flex-wrap gap-4 items-center justify-between z-10 relative select-none text-white">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-indigo-400">
+          {/* Controls Bar - Completely redesigned for maximum mobile responsiveness */}
+          <div className="bg-slate-900 p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 z-10 relative select-none text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-indigo-400 shrink-0">
                 <MapIcon className="w-4 h-4" />
               </div>
               <div>
                 <h3 className="text-sm font-extrabold leading-none text-white">Vikarabad GIS Locator Map</h3>
-                <span className="text-[10px] text-slate-400 font-semibold">Active: {filteredVillages.length} of {villages.length} locations</span>
+                <span className="text-[10px] text-slate-400 font-semibold mt-1 block">Active: {filteredVillages.length} of {villages.length} locations</span>
               </div>
             </div>
 
-            {/* Middle Filters Box */}
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Middle Filters Box - Fully adaptive and mobile-first */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full md:w-auto shrink-0">
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -375,48 +375,48 @@ const HomePage: React.FC = () => {
                   placeholder="Filter village / gp..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1 bg-white/10 border border-white/10 text-white rounded-lg text-xs font-semibold outline-none focus:border-indigo-500 max-w-[150px] w-full placeholder-slate-400"
+                  className="pl-8 pr-3 py-1.5 bg-white/10 border border-white/10 text-white rounded-lg text-xs font-semibold outline-none focus:border-indigo-500 w-full placeholder-slate-400"
                 />
               </div>
 
               <select
                 value={selectedBlock}
                 onChange={(e) => setSelectedBlock(e.target.value)}
-                className="px-2.5 py-1 text-xs font-semibold bg-white/10 border border-white/10 text-white rounded-lg outline-none cursor-pointer focus:border-indigo-500"
+                className="px-2.5 py-1.5 text-xs font-semibold bg-slate-800 border border-white/10 text-white rounded-lg outline-none cursor-pointer focus:border-indigo-500 w-full"
               >
-                <option className="text-slate-900" value="">All Blocks</option>
+                <option value="">All Blocks</option>
                 {blocks.map(b => <option className="text-slate-900" key={b} value={b}>{b}</option>)}
               </select>
 
               <select
                 value={selectedCluster}
                 onChange={(e) => setSelectedCluster(e.target.value)}
-                className="px-2.5 py-1 text-xs font-semibold bg-white/10 border border-white/10 text-white rounded-lg outline-none cursor-pointer focus:border-indigo-500"
+                className="px-2.5 py-1.5 text-xs font-semibold bg-slate-800 border border-white/10 text-white rounded-lg outline-none cursor-pointer focus:border-indigo-500 w-full"
               >
-                <option className="text-slate-900" value="">All Clusters</option>
+                <option value="">All Clusters</option>
                 {clusters.map(c => <option className="text-slate-900" key={c} value={c}>{c}</option>)}
               </select>
             </div>
 
-            {/* Map Options Controls */}
-            <div className="flex items-center gap-2 text-xs">
+            {/* Map Options Controls - Stacks beautifully on mobile */}
+            <div className="flex items-center justify-between sm:justify-start gap-2 text-xs w-full md:w-auto">
               {/* Satellite / Terrain Swapper */}
-              <div className="border border-white/10 rounded-lg p-0.5 flex bg-white/5">
+              <div className="border border-white/10 rounded-lg p-0.5 flex bg-white/5 w-full sm:w-auto">
                 <button
                   onClick={() => setTileType('normal')}
-                  className={`px-3 py-1 rounded-md font-bold transition-all ${
+                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-md font-extrabold text-center transition-all ${
                     tileType === 'normal' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:text-white'
                   }`}
                 >
-                  Standard Map
+                  Standard
                 </button>
                 <button
                   onClick={() => setTileType('satellite')}
-                  className={`px-3 py-1 rounded-md font-bold transition-all ${
+                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-md font-extrabold text-center transition-all ${
                     tileType === 'satellite' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:text-white'
                   }`}
                 >
-                  Satellite View
+                  Satellite
                 </button>
               </div>
 
@@ -424,120 +424,83 @@ const HomePage: React.FC = () => {
               <button
                 onClick={() => setIsFullScreen(!isFullScreen)}
                 title={isFullScreen ? "Exit Fullscreen" : "Fullscreen View"}
-                className="w-8 h-8 rounded-lg border border-white/10 hover:bg-white/10 flex items-center justify-center text-slate-300 transition-colors"
+                className="w-9 h-9 rounded-lg border border-white/10 hover:bg-white/10 flex items-center justify-center text-slate-300 transition-colors shrink-0"
               >
                 {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Main Card Content */}
-          <div className="w-full h-full flex flex-col md:flex-row relative">
+          {/* Main Card Content - Sidebar list has been removed completely */}
+          <div className="w-full h-full relative">
             
-            {/* Sidebar list and legend parameters */}
-            <div className={`w-full md:w-[320px] bg-slate-50 border-r border-slate-100 p-4 shrink-0 flex flex-col justify-between ${
-              isFullScreen ? 'h-[calc(100vh-68px)]' : 'h-[550px]'
-            }`}>
-              
-              <div className="space-y-4 flex-grow overflow-y-auto pr-1">
-                {/* Search query highlight count */}
-                <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 tracking-wider select-none uppercase">
-                  <span>Village Registry list</span>
-                  <span>{filteredVillages.length} Villages</span>
-                </div>
-
-                {/* Village Scrollable List */}
-                {mapLoading ? (
-                  <div className="h-44 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
-                  </div>
-                ) : filteredVillages.length === 0 ? (
-                  <div className="text-center py-10 bg-white border rounded-2xl">
-                    <p className="text-xs text-slate-400 font-semibold mb-1">No matching villages</p>
-                    <button 
-                      onClick={() => { setSearchQuery(''); setSelectedBlock(''); setSelectedCluster(''); }}
-                      className="text-indigo-600 hover:underline text-[10px] font-bold"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-1.5 max-h-[280px] md:max-h-[340px] overflow-y-auto">
-                    {filteredVillages.map((v, i) => {
-                      const color = clusterColors[v.cluster] || '#6366f1';
-                      const isActive = activeVillage?.village === v.village;
-                      return (
-                        <div
-                          key={i}
-                          onClick={() => handleFocusVillage(v)}
-                          className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between select-none ${
-                            isActive 
-                              ? 'bg-white border-indigo-500 shadow-sm shadow-indigo-50/50' 
-                              : 'bg-white hover:bg-slate-100/50 border-slate-150'
-                          }`}
-                        >
-                          <div className="min-w-0 pr-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                              <h4 className="text-xs font-bold text-slate-900 truncate capitalize">{v.village}</h4>
-                            </div>
-                            <span className="text-[10px] text-slate-400 block ml-3.5 italic">GP: {v.gp}</span>
-                          </div>
-                          
-                          <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'text-indigo-600 translate-x-0.5' : 'text-slate-300'}`} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Dynamic Legend classified by unique clusters with color tags */}
-              <div className="border-t border-slate-200/60 pt-3 select-none">
-                <div className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-2">
-                  Cluster Legend Classification
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {uniqueClusters.map((clusterName, idx) => {
-                    const color = clusterColors[clusterName] || '#6366f1';
-                    const listCount = villages.filter(vl => vl.cluster === clusterName).length;
-                    return (
-                      <div key={idx} className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                        <span className="truncate" title={clusterName}>{clusterName}</span>
-                        <span className="text-[9px] text-slate-400 font-semibold">({listCount})</span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-3 text-[9px] leading-relaxed text-slate-400 flex items-start gap-1 p-2 bg-slate-100 rounded-lg">
-                  <Info className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
-                  <span>Click colors on the map or village details on list to snap zoom and display administrative metadata details instantly.</span>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Interactive Leaflet Map Container div */}
-            <div className="flex-grow h-full relative bg-slate-100">
+            {/* Interactive Leaflet Map Container div - Takes 100% of spatial canvas width */}
+            <div className="w-full h-full relative bg-slate-100">
               {mapLoading && (
-                <div className="absolute inset-0 z-20 bg-slate-100/70 backdrop-blur-xs flex flex-col items-center justify-center">
+                <div className="absolute inset-0 z-20 bg-slate-100/70 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center">
                   <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-2" />
-                  <p className="text-xs text-slate-550 font-extrabold text-slate-800">Booting GIS Engine and importing village points...</p>
+                  <p className="text-xs text-slate-700 font-extrabold">Loading maps & village GPS coordinates...</p>
                 </div>
               )}
               {/* Actual Map Target div */}
               <div 
                 ref={mapContainerRef} 
-                className="w-full h-full select-none" 
-                style={{ minHeight: "350px" }}
+                className="w-full h-full min-h-[380px]" 
+                style={{ minHeight: isFullScreen ? "calc(100vh - 68px)" : "500px" }}
               />
             </div>
 
           </div>
 
+        </div>
+      </section>
+
+      {/* Dynamic Cluster Legend & Actions Row - Super responsive, mobile-first legend replacement */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs select-none">
+          <div className="text-[11px] font-extrabold text-slate-400 tracking-wider uppercase mb-3 flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Map Cluster Legend Classification</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+            {uniqueClusters.map((clusterName, idx) => {
+              const color = clusterColors[clusterName] || '#6366f1';
+              const listCount = villages.filter(vl => vl.cluster === clusterName).length;
+              const isSelected = selectedCluster === clusterName;
+              return (
+                <div 
+                  key={idx} 
+                  onClick={() => {
+                    if (isSelected) {
+                      setSelectedCluster('');
+                    } else {
+                      setSelectedCluster(clusterName);
+                      // Center map to first village matching this cluster
+                      const match = villages.find(v => v.cluster === clusterName);
+                      if (match) {
+                        setActiveVillage(match);
+                      }
+                    }
+                  }}
+                  className={`flex items-center gap-2 px-3 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer truncate ${
+                    isSelected 
+                      ? 'bg-indigo-50 border-indigo-300 text-indigo-800 ring-2 ring-indigo-100' 
+                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                  <span className="truncate flex-grow">{clusterName}</span>
+                  <span className="text-[9px] text-slate-400 font-extrabold shrink-0 ml-1 bg-slate-200/55 px-1.5 py-0.5 rounded-md">({listCount})</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-3.5 text-[10px] leading-relaxed text-slate-400 flex items-start gap-1.5 p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+            <Info className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
+            <span>Click maps pins to view GP & Block details. Tap on any cluster label above to filter pins instantly by cluster!</span>
+          </div>
         </div>
       </section>
 
