@@ -16,9 +16,17 @@ const Calendar: React.FC<CalendarProps> = ({ logs, year, month, onDateClick }) =
   const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => i);
 
   const getLogForDay = (day: number) => {
+    const targetDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return logs.find(l => {
-      const logDate = new Date(l.date);
-      return logDate.getDate() === day && (logDate.getMonth() + 1) === month && logDate.getFullYear() === year;
+      if (!l.date) return false;
+      const str = String(l.date).trim();
+      const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+      if (match) {
+        const [_, y, m, d] = match;
+        const formatted = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        return formatted === targetDateStr;
+      }
+      return false;
     });
   };
 

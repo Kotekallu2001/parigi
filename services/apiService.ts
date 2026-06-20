@@ -1,6 +1,46 @@
 
 import { User, WorkLog, Role, WorkStatus, GalleryItem } from '../types';
 
+// Helper to parse dates from spreadsheet in a stable, timezone-agnostic way
+function parseSheetDate(dateStr: any): string {
+  if (!dateStr) return '';
+  const str = String(dateStr).trim();
+
+  // If it's a full ISO8601 UTC string (contains T or Z, e.g., "2026-06-30T18:30:00.000Z")
+  // we want to parse it as a Date and format it using India Standard Time (Asia/Kolkata),
+  // because the worker's attendance was submitted for their local day in Vikarabad.
+  if (str.includes('T') || str.includes('Z')) {
+    try {
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        return formatter.format(d); // returns "YYYY-MM-DD" in IST
+      }
+    } catch {}
+  }
+
+  const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (match) {
+    const [_, y, m, d] = match;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  try {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  } catch {}
+  return str;
+}
+
 // Web App URL 1: Main Application Personnel System (Login, Daily Diaries, Attendance reports, User Registry)
 // Connecting to your spreadsheet: 'Application_Vikarabad'
 const GAS_MAIN_WEBAPP_URL: string = "https://script.google.com/macros/s/AKfycbxIvWtP7mohEMsKpqlyN4xnsu_9m6BOj2TblT63ldMftgCVxbrRQs9ee0jmuxdbcu3wmg/exec"; 
@@ -91,7 +131,7 @@ export const apiService = {
       return (data.logs || []).map((l: any) => ({
         ...l,
         username: l.username || username,
-        date: l.date ? new Date(l.date).toISOString().split('T')[0] : ''
+        date: parseSheetDate(l.date)
       }));
     } catch (err) {
       console.warn("Fetch attendance online query reached a connection limit. Reading offline backup logs:", err);
@@ -112,7 +152,7 @@ export const apiService = {
       const data = await resp.json();
       return (data.logs || []).map((l: any) => ({
         ...l,
-        date: l.date ? new Date(l.date).toISOString().split('T')[0] : ''
+        date: parseSheetDate(l.date)
       }));
     } catch (err) {
       console.warn("Log synchronization online stream paused. Sourcing local workspace backup logs:", err);

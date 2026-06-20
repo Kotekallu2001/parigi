@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import { apiService } from '../services/apiService';
+import { Eye, EyeOff } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
@@ -60,16 +62,26 @@ const LoginPage: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="password" title="Try 'admin' for demo" className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-              <input
-                id="password"
-                type="password"
-                required
-                className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-all"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <div className="flex rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  className="appearance-none rounded-l-xl relative block flex-1 min-w-0 px-4 py-3 border border-slate-300 border-r-0 placeholder-slate-400 text-slate-900 focus:outline-none sm:text-sm transition-all"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="flex items-center justify-center px-4 border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 focus:outline-none transition-all select-none cursor-pointer border-l-0 rounded-r-xl"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -82,9 +94,9 @@ const LoginPage: React.FC = () => {
 
           <div>
             <button
-              type="submit"
-              disabled={loading}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+               type="submit"
+               disabled={loading}
+               className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {loading ? (
                 <span className="flex items-center">
@@ -94,13 +106,6 @@ const LoginPage: React.FC = () => {
             </button>
           </div>
         </form>
-        <div className="mt-6 p-4 bg-indigo-50 rounded-xl">
-            <h4 className="text-xs font-bold text-indigo-800 uppercase mb-2">Demo Credentials</h4>
-            <div className="text-xs text-indigo-600">
-                <div>Username: <strong>admin</strong></div>
-                <div>Password: <strong>admin</strong></div>
-            </div>
-        </div>
       </div>
     </div>
   );

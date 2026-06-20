@@ -117,7 +117,12 @@ const StaffDashboard: React.FC = () => {
                 logs={logs} 
                 year={currentYear} 
                 month={currentMonth} 
-                onDateClick={(d) => navigate('/log-work', { state: { initialDate: d.toISOString().split('T')[0] } })} 
+                onDateClick={(d) => {
+                  const yyyy = d.getFullYear();
+                  const mm = String(d.getMonth() + 1).padStart(2, '0');
+                  const dd = String(d.getDate()).padStart(2, '0');
+                  navigate('/log-work', { state: { initialDate: `${yyyy}-${mm}-${dd}` } });
+                }} 
               />
             )}
           </div>

@@ -5,12 +5,26 @@ import { WorkLog, WorkStatus } from '../types';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+const chunkArrayDynamic = <T,>(arr: T[], firstSize: number, otherSize: number): T[][] => {
+  if (arr.length === 0) return [[]];
   const chunks: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
+  chunks.push(arr.slice(0, firstSize));
+  let i = firstSize;
+  while (i < arr.length) {
+    chunks.push(arr.slice(i, i + otherSize));
+    i += otherSize;
   }
   return chunks;
+};
+
+const formatToGBDate = (dateStr?: string): string => {
+  if (!dateStr) return '';
+  const match = String(dateStr).trim().match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (match) {
+    const [_, y, m, d] = match;
+    return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+  }
+  return dateStr;
 };
 
 const ReportsPage: React.FC = () => {
@@ -36,24 +50,41 @@ const ReportsPage: React.FC = () => {
     const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
     const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
 
+    const startDateStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}-26`;
+    const endDateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-25`;
+
     try {
       const allLogs = await apiService.getAllLogs();
       
-      const filtered = allLogs.filter(l => {
-          if (l.username !== auth.user?.username) return false;
-          const d = new Date(l.date);
-          const day = d.getDate();
-          const m = d.getMonth() + 1;
-          const y = d.getFullYear();
+      // Keep only the latest log entry for any duplicated date.
+      // Since allLogs contains spreadsheet rows in sequential order (oldest to newest),
+      // the latest entry for a specific date is appended at the end of the sheet.
+      // Moving sequentially, we can overwrite earlier entries for the same date.
+      const latestLogsMap = new Map<string, WorkLog>();
 
-          const logDate = new Date(y, m - 1, day);
-          const startDate = new Date(prevYear, prevMonth - 1, 26);
-          const endDate = new Date(selectedYear, selectedMonth - 1, 25);
+      for (const log of allLogs) {
+        if (log.username !== auth.user?.username) continue;
+        if (!log.date) continue;
+        
+        const match = log.date.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+        if (!match) continue;
+        const [_, y, m, d] = match;
+        const logDateStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
 
-          return logDate >= startDate && logDate <= endDate;
-      });
+        if (logDateStr >= startDateStr && logDateStr <= endDateStr) {
+          latestLogsMap.set(logDateStr, {
+            ...log,
+            date: logDateStr // normalize the date to YYYY-MM-DD
+          });
+        }
+      }
 
-      setReportLogs(filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      const deduplicatedLogs = Array.from(latestLogsMap.values());
+      
+      // Sort in ascending order from low to high (by normalized date string)
+      deduplicatedLogs.sort((a, b) => a.date.localeCompare(b.date));
+
+      setReportLogs(deduplicatedLogs);
     } catch (err) {
       console.error("Report Generation Error:", err);
     } finally {
@@ -63,7 +94,7 @@ const ReportsPage: React.FC = () => {
 
   const currentMonthName = months[selectedMonth - 1].toUpperCase();
 
-  const logChunks = reportLogs.length > 0 ? chunkArray(reportLogs, 10) : [[]];
+  const logChunks = reportLogs.length > 0 ? chunkArrayDynamic(reportLogs, 10, 15) : [[]];
 
   const handleDownloadPDF = async () => {
     try {
@@ -168,50 +199,60 @@ const ReportsPage: React.FC = () => {
           >
             {/* Top Container for Header, Info, Table */}
             <div>
-              {/* Logo and Main Header */}
-              <div className="relative mb-6 pt-2 select-none flex items-center justify-center">
-                <div className="absolute left-0 top-0">
-                   <img 
-                    src="https://www.wassan.org/wp-content/uploads/2021/11/wassan-logo.png" 
-                    alt="WASSAN" 
-                    className="h-16 w-auto object-contain"
-                    referrerPolicy="no-referrer"
-                   />
-                </div>
-                <div className="text-center pt-2 border-b-2 border-slate-800 pb-2 w-full">
-                   <h1 className="text-2xl font-black tracking-widest text-slate-900 uppercase">
-                     MONTHLY WORK DONE REPORT
-                   </h1>
-                </div>
-              </div>
+              {index === 0 ? (
+                <>
+                  {/* Logo and Main Header */}
+                  <div className="relative mb-6 pt-2 select-none flex items-center justify-center">
+                    <div className="absolute left-0 top-0">
+                       <img 
+                        src="https://lh3.googleusercontent.com/d/1OLPv_2TSVl4E7upm9YjvJqnPbCe7MkBv" 
+                        alt="WASSAN" 
+                        className="h-16 w-auto object-contain"
+                        referrerPolicy="no-referrer"
+                       />
+                    </div>
+                    <div className="text-center pt-2 border-b-2 border-slate-800 pb-2 w-full">
+                       <h1 className="text-2xl font-black tracking-widest text-slate-900 uppercase">
+                         MONTHLY WORK DONE REPORT
+                       </h1>
+                    </div>
+                  </div>
 
-              {/* Info Grid - Standard Office Layout with Perfect Bottom Align Underline */}
-              <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-6 text-[13px] select-none">
-                <div className="flex items-end min-h-[30px]">
-                  <span className="font-bold w-36 uppercase text-slate-700 pb-1">NAME:</span>
-                  <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 min-h-[24px]">
-                    {auth.user?.username || '-'}
-                  </span>
+                  {/* Info Grid - Standard Office Layout with Perfect Bottom Align Underline */}
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-6 text-[13px] select-none">
+                    <div className="flex items-end min-h-[30px]">
+                      <span className="font-bold w-36 uppercase text-slate-700 pb-1">NAME:</span>
+                      <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 min-h-[24px]">
+                        {auth.user?.username || '-'}
+                      </span>
+                    </div>
+                    <div className="flex items-end min-h-[30px]">
+                      <span className="font-bold w-40 uppercase text-slate-700 pb-1">REPORTING MONTH:</span>
+                      <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 min-h-[24px]">
+                        {currentMonthName} {selectedYear}
+                      </span>
+                    </div>
+                    <div className="flex items-end min-h-[30px]">
+                      <span className="font-bold w-36 uppercase text-slate-700 pb-1">DESIGNATION:</span>
+                      <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 min-h-[24px]">
+                        {auth.user?.role || '-'}
+                      </span>
+                    </div>
+                    <div className="flex items-end min-h-[30px]">
+                      <span className="font-bold w-36 uppercase text-slate-700 pb-1">LOCATION:</span>
+                      <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 uppercase min-h-[24px]">
+                        VIKARABAD
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Small elegant title banner on pages 2+ to keep the context clear while avoiding unneeded headers */
+                <div className="flex justify-between items-center mb-6 pb-2 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-xs select-none">
+                  <span>MONTHLY WORK DONE REPORT — PAGE {index + 1}</span>
+                  <span className="font-bold">{auth.user?.username} ({currentMonthName} {selectedYear})</span>
                 </div>
-                <div className="flex items-end min-h-[30px]">
-                  <span className="font-bold w-40 uppercase text-slate-700 pb-1">REPORTING MONTH:</span>
-                  <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 min-h-[24px]">
-                    {currentMonthName} {selectedYear}
-                  </span>
-                </div>
-                <div className="flex items-end min-h-[30px]">
-                  <span className="font-bold w-36 uppercase text-slate-700 pb-1">DESIGNATION:</span>
-                  <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 min-h-[24px]">
-                    {auth.user?.role || '-'}
-                  </span>
-                </div>
-                <div className="flex items-end min-h-[30px]">
-                  <span className="font-bold w-36 uppercase text-slate-700 pb-1">LOCATION:</span>
-                  <span className="border-b border-black flex-1 px-2 pb-1 font-semibold text-slate-900 uppercase min-h-[24px]">
-                    VIKARABAD
-                  </span>
-                </div>
-              </div>
+              )}
 
               {/* Report Table */}
               <div className="w-full">
@@ -226,37 +267,30 @@ const ReportsPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="telugu-font text-[11px]">
-                    {chunk.length > 0 ? chunk.map((log, i) => (
-                      <tr key={i} className="h-9">
-                        <td className="text-center border border-black py-1 px-2 font-semibold select-none">
-                          {index * 10 + i + 1}
-                        </td>
-                        <td className="text-center border border-black py-1 px-2 select-none">
-                          {new Date(log.date).toLocaleDateString('en-GB')}
-                        </td>
-                        <td className="border border-black py-1 px-2 uppercase font-medium">{log.village || '-'}</td>
-                        <td className="border border-black py-1 px-2 font-semibold text-indigo-900">{log.activity || '-'}</td>
-                        <td className="border border-black py-1 px-2 leading-relaxed">
-                          {log.status === WorkStatus.WORKING ? log.workDetails : `[${log.status.toUpperCase()}] ${log.reason}`}
-                        </td>
-                      </tr>
-                    )) : (
+                    {chunk.length > 0 ? chunk.map((log, i) => {
+                      const beforeCount = index === 0 ? 0 : 10 + (index - 1) * 15;
+                      return (
+                        <tr key={i} className="h-9">
+                          <td className="text-center border border-black py-1 px-2 font-semibold select-none">
+                            {beforeCount + i + 1}
+                          </td>
+                          <td className="text-center border border-black py-1 px-2 select-none">
+                            {formatToGBDate(log.date)}
+                          </td>
+                          <td className="border border-black py-1 px-2 uppercase font-medium">{log.village || '-'}</td>
+                          <td className="border border-black py-1 px-2 font-semibold text-indigo-900">{log.activity || '-'}</td>
+                          <td className="border border-black py-1 px-2 leading-relaxed font-sans">
+                            {log.status === WorkStatus.WORKING ? log.workDetails : `[${log.status.toUpperCase()}] ${log.reason}`}
+                          </td>
+                        </tr>
+                      );
+                    }) : (
                       <tr>
                         <td colSpan={5} className="py-12 text-center text-slate-400 italic border border-black text-xs select-none">
                           {loading ? 'Processing data...' : 'No entries found for this reporting period.'}
                         </td>
                       </tr>
                     )}
-                    {/* Fill remaining space to match the physical document look perfectly (10 rows limit) */}
-                    {chunk.length < 10 && Array.from({ length: 10 - chunk.length }).map((_, i) => (
-                      <tr key={`blank-${i}`} className="h-9">
-                        <td className="border border-black select-none"></td>
-                        <td className="border border-black select-none"></td>
-                        <td className="border border-black select-none"></td>
-                        <td className="border border-black select-none"></td>
-                        <td className="border border-black select-none"></td>
-                      </tr>
-                    ))}
                   </tbody>
                 </table>
               </div>
@@ -264,15 +298,19 @@ const ReportsPage: React.FC = () => {
 
             {/* Bottom Container for Signatures / Footers */}
             <div>
-              {/* Footer Signature Section */}
-              <div className="flex justify-between px-8 border-t border-slate-100 pt-4 select-none">
-                <div className="w-64 text-center border-t border-black pt-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">Employee Signature</span>
+              {/* Footer Signature Section - Visible ONLY on the very last page */}
+              {index === logChunks.length - 1 ? (
+                <div className="flex justify-between px-8 border-t border-slate-100 pt-4 select-none">
+                  <div className="w-64 text-center border-t border-black pt-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">Employee Signature</span>
+                  </div>
+                  <div className="w-64 text-center border-t border-black pt-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">Authorized Signatory</span>
+                  </div>
                 </div>
-                <div className="w-64 text-center border-t border-black pt-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">Authorized Signatory</span>
-                </div>
-              </div>
+              ) : (
+                <div className="h-[20px] select-none"></div>
+              )}
 
               <div className="mt-4 text-[9px] text-center text-slate-400 uppercase tracking-widest select-none">
                 This is a computer-generated report | Wassan Vikarabad Operations | {new Date().toLocaleString('en-GB')}

@@ -10,8 +10,16 @@ const LogWorkForm: React.FC = () => {
   const location = useLocation();
   const state = location.state as { initialDate?: string };
 
+  const getTodayLocalDateStr = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const [formData, setFormData] = useState<Partial<WorkLog>>({
-    date: state?.initialDate || new Date().toISOString().split('T')[0],
+    date: state?.initialDate || getTodayLocalDateStr(),
     username: auth.user?.username || '',
     village: '',
     activity: '',
@@ -47,13 +55,12 @@ const LogWorkForm: React.FC = () => {
 
   const getFormattedDate = (dateStr?: string) => {
     if (!dateStr) return '';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toISOString().split('T')[0];
-    } catch {
-      return dateStr;
+    const match = String(dateStr).trim().match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (match) {
+      const [_, y, m, d] = match;
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
     }
+    return dateStr;
   };
 
   const isDateBlocked = existingLogs.some(log => {
