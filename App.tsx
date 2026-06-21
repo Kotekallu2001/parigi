@@ -6,8 +6,7 @@ import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import GalleryPage from './pages/GalleryPage';
 import LoginPage from './pages/LoginPage';
-import StaffDashboard from './pages/StaffDashboard';
-import AdminDashboard from './pages/AdminDashboard';
+import Dashboard from './pages/Dashboard';
 import LogWorkForm from './pages/LogWorkForm';
 import ReportsPage from './pages/ReportsPage';
 import UserManagement from './pages/UserManagement';
@@ -38,7 +37,7 @@ const ProtectedRoute = ({ children, allowedRoles }: React.PropsWithChildren<{ al
     const isAllowed = allowedRoles.some(role => role.toLowerCase() === userRoleLower);
     
     if (!isAllowed) {
-      return <Navigate to="/dashboard" />;
+      return <Navigate to="/" />;
     }
   }
 
@@ -76,8 +75,8 @@ const App: React.FC = () => {
               <Route path="/login" element={auth.isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
               
               <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  {isAdmin ? <AdminDashboard /> : <StaffDashboard />}
+                <ProtectedRoute allowedRoles={[Role.ADMIN, Role.PROJECT_STAFF]}>
+                  <Dashboard />
                 </ProtectedRoute>
               } />
 

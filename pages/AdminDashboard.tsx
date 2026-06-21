@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { WorkLog, User, WorkStatus } from '../types';
-import Calendar from '../components/Calendar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const AdminDashboard: React.FC = () => {
@@ -187,17 +186,6 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="lg:col-span-3 space-y-8">
-          <div className="bg-white rounded-2xl shadow-sm border p-6">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Attendance for {selectedUser}</h2>
-            {loading ? (
-                <div className="h-64 flex items-center justify-center">
-                    <i className="fas fa-circle-notch fa-spin text-3xl text-indigo-600"></i>
-                </div>
-            ) : (
-                <Calendar logs={logs} year={year} month={month} />
-            )}
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white p-6 rounded-2xl shadow-sm border">
               <h3 className="font-bold text-slate-900 mb-6">Activity Breakdown</h3>

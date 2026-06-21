@@ -17,7 +17,7 @@ const Calendar: React.FC<CalendarProps> = ({ logs, year, month, onDateClick }) =
 
   const getLogForDay = (day: number) => {
     const targetDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return logs.find(l => {
+    return [...logs].reverse().find(l => {
       if (!l.date) return false;
       const str = String(l.date).trim();
       const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);

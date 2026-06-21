@@ -18,20 +18,22 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Gallery', path: '/gallery' },
-    { name: 'Dashboard', path: '/dashboard', private: true },
+    { name: 'Dashboard', path: '/dashboard', private: true, allowedRoles: [Role.ADMIN, Role.PROJECT_STAFF] },
     { name: 'Log Work', path: '/log-work', private: true },
     { name: 'Reports', path: '/reports', private: true },
-    { name: 'Users', path: '/admin/users', private: true, role: Role.ADMIN },
+    { name: 'Users', path: '/admin/users', private: true, allowedRoles: [Role.ADMIN] },
   ];
 
   const filteredLinks = navLinks.filter(link => {
     if (!link.private) return true;
     if (link.private && !auth.isAuthenticated) return false;
     
-    if (link.role && auth.user?.role) {
+    if (link.allowedRoles && auth.user?.role) {
       const userRoleLower = auth.user.role.toLowerCase();
-      const linkRoleLower = link.role.toLowerCase();
-      if (userRoleLower !== linkRoleLower) return false;
+      const hasPermission = link.allowedRoles.some(
+        role => role.toLowerCase() === userRoleLower
+      );
+      if (!hasPermission) return false;
     }
     
     return true;
