@@ -253,11 +253,11 @@ const CropsDashboard: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center font-sans">
-            <Sprout className="mr-2 h-6 w-6 text-indigo-600" /> paddy crop farmers dashboard
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center font-sans capitalize">
+            <Sprout className="mr-2 h-6 w-6 text-indigo-600" /> {selectedCrop === 'All' ? 'Crops & Farmers' : `${selectedCrop.toLowerCase()} Farmers`} Dashboard
           </h2>
           <p className="text-xs text-slate-500 font-medium">
-            Analyzing paddy cultivation area, farmers lists, and crop metrics across blocks.
+            Analyzing {selectedCrop === 'All' ? 'cultivation' : selectedCrop.toLowerCase() + ' cultivation'} area, farmers lists, and crop metrics across blocks.
           </p>
         </div>
 
@@ -433,7 +433,7 @@ const CropsDashboard: React.FC = () => {
 
           {/* KPI Cards Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Card 1: Total Paddy Farmers */}
+            {/* Card 1: Total Farmers */}
             <div className="bg-white p-6 rounded-2xl border shadow-xs flex items-center gap-4 hover:shadow-sm transition-shadow">
               <div className="p-3.5 rounded-xl bg-indigo-50 text-indigo-600 flex-shrink-0">
                 <Users className="w-6 h-6" />
@@ -442,7 +442,9 @@ const CropsDashboard: React.FC = () => {
                 <div id="metric-total-farmers" className="text-2xl sm:text-3xl font-black text-slate-900 leading-none">
                   {stats.totalFarmers}
                 </div>
-                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Paddy Farmers</div>
+                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  Total {selectedCrop === 'All' ? 'Registered' : selectedCrop} Farmers
+                </div>
               </div>
             </div>
 
@@ -455,7 +457,9 @@ const CropsDashboard: React.FC = () => {
                 <div id="metric-total-acres" className="text-2xl sm:text-3xl font-black text-slate-900 leading-none">
                   {stats.totalAcres.toFixed(1)} <span className="text-xs font-normal text-slate-500">Ac</span>
                 </div>
-                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cultivated Land Area</div>
+                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  {selectedCrop === 'All' ? 'Cultivated Land Area' : `${selectedCrop} Cultivated Area`}
+                </div>
               </div>
             </div>
 
@@ -493,9 +497,9 @@ const CropsDashboard: React.FC = () => {
             <div className="bg-white p-5 rounded-2xl border shadow-xs lg:col-span-2 space-y-4">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                  <TrendingUp className="h-4 w-4 text-indigo-600" /> Land Cultivation Acres by Mandal Group
+                  <TrendingUp className="h-4 w-4 text-indigo-600" /> {selectedCrop === 'All' ? 'Land Cultivation' : `${selectedCrop} Cultivation`} Acres by Mandal Group
                 </h3>
-                <p className="text-[10px] text-slate-400 font-medium">Sum of acres for active farmers per mandal division</p>
+                <p className="text-[10px] text-slate-400 font-medium">Sum of acres for active {selectedCrop === 'All' ? 'farmers' : `${selectedCrop.toLowerCase()} farmers`} per mandal division</p>
               </div>
 
               <div className="h-64 sm:h-72 w-full">
@@ -576,8 +580,10 @@ const CropsDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl border shadow-xs overflow-hidden">
             <div className="px-6 py-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 font-sans tracking-tight">Paddy Farmers Detailed Roster</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Complete list of registered farmers matching selected criteria.</p>
+                <h3 className="text-sm font-bold text-slate-900 font-sans tracking-tight">
+                  {selectedCrop === 'All' ? 'Farmers Detailed Roster' : `${selectedCrop} Farmers Detailed Roster`}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">Complete list of registered {selectedCrop === 'All' ? 'farmers' : `${selectedCrop.toLowerCase()} farmers`} matching selected criteria.</p>
               </div>
 
               <div className="bg-indigo-50 border text-indigo-700 text-[10px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider self-start sm:self-auto flex items-center">

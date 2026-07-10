@@ -37,7 +37,7 @@ const Dashboard: React.FC = () => {
       id: DashboardTab.CROPS,
       label: 'Crops & Farmers',
       icon: Sprout,
-      description: 'Paddy farmers & acres metrics'
+      description: 'Crops cultivation & acres metrics'
     },
     {
       id: DashboardTab.STAFF_LOGS,
