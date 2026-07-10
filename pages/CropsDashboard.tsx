@@ -11,7 +11,9 @@ import {
   Database,
   Grid,
   FileSpreadsheet,
-  AlertCircle
+  AlertCircle,
+  Coins,
+  X
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -37,6 +39,9 @@ interface FarmerRecord {
   season: string;
   financialYear: string;
   cropName: string;
+  workingCost?: number;
+  grossIncome?: number;
+  netIncome?: number;
 }
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444'];
@@ -57,6 +62,7 @@ const CropsDashboard: React.FC = () => {
   // Pagination for farmers table
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const [selectedFarmer, setSelectedFarmer] = useState<FarmerRecord | null>(null);
 
   const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTtnzCBmnEWEb3lVa-LvRgq55bLZ1qAhubiLpcpICOoYCk7_LeONAPbJ6fLbLLA9g/pub?gid=53221638&single=true&output=csv';
 
@@ -107,6 +113,9 @@ const CropsDashboard: React.FC = () => {
     const seasonIdx = getColIndex(['season']);
     const fyIdx = getColIndex(['financial', 'year', 'fy']);
     const cropIdx = getColIndex(['crop name', 'crop_name', 'crop']);
+    const workingCostIdx = getColIndex(['working cost', 'working_cost']);
+    const grossIncomeIdx = getColIndex(['gross income', 'gross_income', 'grossincome']);
+    const netIncomeIdx = getColIndex(['net income', 'net_income', 'netincome']);
 
     const list: FarmerRecord[] = [];
 
@@ -142,7 +151,23 @@ const CropsDashboard: React.FC = () => {
       const financialYear = values[fyIdx !== -1 ? fyIdx : 7] || '';
       const cropName = values[cropIdx !== -1 ? cropIdx : 8] || '';
 
+      const workingCostRaw = workingCostIdx !== -1 ? values[workingCostIdx] : undefined;
+      const grossIncomeRaw = grossIncomeIdx !== -1 ? values[grossIncomeIdx] : undefined;
+      const netIncomeRaw = netIncomeIdx !== -1 ? values[netIncomeIdx] : undefined;
+
       const acres = parseFloat(acresRaw.replace(/[^\d.]/g, '')) || 0;
+
+      const parseNumericField = (val?: string): number | undefined => {
+        if (!val) return undefined;
+        const cleaned = val.replace(/[^\d.-]/g, '');
+        if (!cleaned) return undefined;
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? undefined : num;
+      };
+
+      const workingCost = parseNumericField(workingCostRaw);
+      const grossIncome = parseNumericField(grossIncomeRaw);
+      const netIncome = parseNumericField(netIncomeRaw);
 
       if (farmerName && mandal) {
         list.push({
@@ -154,7 +179,10 @@ const CropsDashboard: React.FC = () => {
           acres,
           season: season.trim() || 'Kharif',
           financialYear: financialYear.trim() || '2024-25',
-          cropName: cropName.trim() || 'Paddy'
+          cropName: cropName.trim() || 'Paddy',
+          workingCost,
+          grossIncome,
+          netIncome
         });
       }
     }
@@ -593,7 +621,7 @@ const CropsDashboard: React.FC = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs min-w-[700px]">
+              <table className="w-full text-left text-xs min-w-[900px]">
                 <thead className="bg-slate-50 border-b text-slate-500 font-bold uppercase tracking-wider">
                   <tr>
                     <th className="py-3 px-5 text-center">S.No</th>
@@ -602,6 +630,9 @@ const CropsDashboard: React.FC = () => {
                     <th className="py-3 px-4">Mandal Division</th>
                     <th className="py-3 px-4">Village Name</th>
                     <th className="py-3 px-4">Acres Area</th>
+                    <th className="py-3 px-4 text-right">Working Cost</th>
+                    <th className="py-3 px-4 text-right">Gross Income</th>
+                    <th className="py-3 px-4 text-right">Net Income</th>
                     <th className="py-3 px-4">Variety / season</th>
                   </tr>
                 </thead>
@@ -609,7 +640,11 @@ const CropsDashboard: React.FC = () => {
                   {paginatedData.map((record, index) => {
                     const rowNumber = (currentPage - 1) * itemsPerPage + index + 1;
                     return (
-                      <tr key={index} className="hover:bg-slate-50/50">
+                      <tr 
+                        key={index} 
+                        className="hover:bg-indigo-50/40 cursor-pointer transition-colors"
+                        onClick={() => setSelectedFarmer(record)}
+                      >
                         <td className="py-3 px-5 text-center font-bold text-slate-400">
                           {rowNumber}
                         </td>
@@ -633,6 +668,29 @@ const CropsDashboard: React.FC = () => {
                             {record.acres.toFixed(2)} Ac
                           </span>
                         </td>
+                        <td className="py-3 px-4 text-right">
+                          {record.workingCost !== undefined ? (
+                            <span className="font-semibold text-slate-700">₹{record.workingCost.toLocaleString('en-IN')}</span>
+                          ) : (
+                            <span className="text-slate-400 italic text-[10px]">N/A</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {record.grossIncome !== undefined ? (
+                            <span className="font-semibold text-slate-700">₹{record.grossIncome.toLocaleString('en-IN')}</span>
+                          ) : (
+                            <span className="text-slate-400 italic text-[10px]">N/A</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {record.netIncome !== undefined ? (
+                            <span className={`font-bold ${record.netIncome >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              ₹{record.netIncome.toLocaleString('en-IN')}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 italic text-[10px]">N/A</span>
+                          )}
+                        </td>
                         <td className="py-3 px-4">
                           <div className="text-slate-700 font-bold">{record.cropName}</div>
                           <div className="text-[10px] text-slate-400 uppercase font-extrabold">{record.season} / {record.financialYear}</div>
@@ -642,7 +700,7 @@ const CropsDashboard: React.FC = () => {
                   })}
                   {filteredData.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-slate-400 italic">
+                      <td colSpan={10} className="py-12 text-center text-slate-400 italic">
                         No farmer records matched the filter criteria. Try expanding search query.
                       </td>
                     </tr>
@@ -700,6 +758,131 @@ const CropsDashboard: React.FC = () => {
             )}
           </div>
         </>
+      )}
+
+      {/* Farmer Details Modal */}
+      {selectedFarmer && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="bg-slate-900 text-white px-6 py-5 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sm text-indigo-400">
+                  {selectedFarmer.farmerName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold tracking-tight">{selectedFarmer.farmerName}</h4>
+                  <p className="text-[10px] text-slate-400">S/o: {selectedFarmer.fatherName || 'N/A'}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedFarmer(null)}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* General & Location Info */}
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mandal Division</span>
+                  <span className="text-xs font-bold text-slate-800">{selectedFarmer.mandal}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Village Name</span>
+                  <span className="text-xs font-bold text-slate-800">{selectedFarmer.village}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mobile Number</span>
+                  <span className="text-xs font-semibold text-slate-800">{selectedFarmer.mobile || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Cultivation Land</span>
+                  <span className="text-xs font-bold text-indigo-600">{selectedFarmer.acres.toFixed(2)} Acres</span>
+                </div>
+              </div>
+
+              {/* Crop details */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="border border-slate-100 p-3 rounded-xl text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Crop Name</span>
+                  <span className="text-xs font-black text-slate-800 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md inline-block">{selectedFarmer.cropName}</span>
+                </div>
+                <div className="border border-slate-100 p-3 rounded-xl text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Season</span>
+                  <span className="text-xs font-bold text-slate-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md inline-block">{selectedFarmer.season}</span>
+                </div>
+                <div className="border border-slate-100 p-3 rounded-xl text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Fin. Year</span>
+                  <span className="text-xs font-bold text-slate-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md inline-block">{selectedFarmer.financialYear}</span>
+                </div>
+              </div>
+
+              {/* Financial Metrics Section */}
+              <div className="space-y-3">
+                <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b pb-1.5 flex items-center gap-1.5">
+                  <Coins className="h-4 w-4 text-emerald-600" /> Cultivation Financial Details
+                </h5>
+                
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Working Cost */}
+                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">Working Cost</span>
+                    <span className="text-sm font-black text-slate-800 leading-none">
+                      {selectedFarmer.workingCost !== undefined ? `₹${selectedFarmer.workingCost.toLocaleString('en-IN')}` : 'N/A'}
+                    </span>
+                  </div>
+
+                  {/* Gross Income */}
+                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">Gross Income</span>
+                    <span className="text-sm font-black text-slate-800 leading-none">
+                      {selectedFarmer.grossIncome !== undefined ? `₹${selectedFarmer.grossIncome.toLocaleString('en-IN')}` : 'N/A'}
+                    </span>
+                  </div>
+
+                  {/* Net Income */}
+                  <div className="bg-emerald-50/30 p-4 rounded-2xl border border-emerald-100/50 flex flex-col justify-between">
+                    <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-wider block mb-1.5">Net Income</span>
+                    <span className={`text-sm font-black leading-none ${selectedFarmer.netIncome !== undefined && selectedFarmer.netIncome >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {selectedFarmer.netIncome !== undefined ? `₹${selectedFarmer.netIncome.toLocaleString('en-IN')}` : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Profit/Loss Badge/Summary */}
+                {selectedFarmer.workingCost !== undefined && selectedFarmer.grossIncome !== undefined && selectedFarmer.netIncome !== undefined && (
+                  <div className="mt-3 text-[11px] font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 text-center flex items-center justify-center gap-1.5">
+                    {selectedFarmer.netIncome >= 0 ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                        <span>This crop generated a profit margin of <strong className="text-emerald-700">{selectedFarmer.grossIncome > 0 ? ((selectedFarmer.netIncome / selectedFarmer.grossIncome) * 100).toFixed(1) : '0'}%</strong> of gross revenue.</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
+                        <span>This crop operated at a net loss of <strong className="text-rose-700">₹{Math.abs(selectedFarmer.netIncome).toLocaleString('en-IN')}</strong>.</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-slate-50 px-6 py-4 border-t flex justify-end">
+              <button
+                onClick={() => setSelectedFarmer(null)}
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors shadow-sm"
+              >
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
